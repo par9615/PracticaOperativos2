@@ -4,81 +4,68 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "vector.h"
-
 typedef enum { false, true } bool;
 
-// Borra espacios al principio (causan ruido)
-char *delete_first_spaces(char * string)
+/* Returns an array of pointers with every pointer, pointing to a word
+   and updates the value of argc*/
+char **create_argv_agrc(char * string, int * argc)
 {
-	int lenght = strlen(string), i, j = 0;
-	bool not_found_word = true;
-	char *new_string = (char *)malloc(sizeof(char));
+	char ** argv = (char**)malloc(sizeof(char *));
+	char * word = (char *)malloc(sizeof(char));
+	int i, j, words = 0;
+	int lenght = strlen(string);
 
-	if (string[0] == '')
+	for (i = 0; i < lenght; i++)
 	{
-		for (i = 1; i < lenght; i++)
+		if (string[i] == ' '){
+			continue;
+		}
+		else
 		{
-			if (string[i] == ' ' && not_found_word)
-				continue;
-			else {
-				if (not_found_word)
-					not_found_word = false;
-				new_string[j++] = string[i];
-				new_string = (char *)realloc(new_string, sizeof(char) * (j + 1));
+			argv = (char **)realloc(argv, sizeof(char *) * (words + 1));
+			argv[words] = (char *)malloc(sizeof(char *));
+			j = 0;
+			for ( ; i < lenght && string[i] != ' '; i++)
+			{
+				argv[words][j++] = string[i];
+				argv[words] = (char *)realloc(argv[words], sizeof(char) * (j + 1));
 			}
-		}
-		new_string[j] = '\0';
-		free(string);
-		return new_string;
-	}
-	free(new_string);
-	return string;
-}
-
-// Regresa un arreglo de enteros del inicio de cada palabra
-int *words_identifiers(char * string, int * count_strings)
-{
-	int *index;
-	int i, length = strlen(string);
-	bool not_found_word = true;
-	char *new_string = malloc(sizeof(char));
-
-	for (i = 0; i < lenght - 1; i++)
-	{
-		if (new_string[i] == ' ' && new_string[i+1] != ' ')
-		{
-			(*count_strings)++;
-			index = (int *)realloc(index, sizeof(int) * (*count_strings));
-			index[count_strings] = i + 1;
+			argv[words++][j] = '\0';
 		}
 	}
-	return index;
+	argv[words] = NULL;
+	*argc = words;
 
+	return argv;
 }
 
 int main()
 {
-	// Datos de input de consola
+	// array to read command string
 	char *command = (char *)malloc(sizeof(char));
 
-	// Variables de apoyo para leer todo el comando
+	// Argv and argc
+	char ** local_argv;
+	int local_argc = 0;
+
 	char c;
 	int i = 0;
-	int count_strings = 0;
 
 	printf("sh >> ");
 	while((c = getchar()) != '\n' && c != EOF)
 	{
-		command[i++] = c; // Agrega letra del comando
-		command = realloc(command, i + 1); // Agrega espacio para caracter
+		command[i++] = c; // Adds the value of c to the array
+		command = realloc(command, i + 1); // Adds space for the next character
 	}
-	command[i] = '\0'; // caracter nulo termino de string
+	command[i] = '\0'; // character end string
 
-	int *words_indexes = words_identifiers(&command, &count_strings);
+	// Creation of argv and update of argc
+	local_argv = create_argv_agrc(command, &local_argc);
 
-	// Crear condicionales para ver que accion ejecutar
-
+	for (i = 0; i < local_argc; i++)
+	{
+		printf("argv[%d] = %s\n", i, local_argv[i]);
+	}
 
 	printf("Entered string: %s\n", command);
 
