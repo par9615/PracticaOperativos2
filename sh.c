@@ -8,10 +8,9 @@ typedef enum { false, true } bool;
 
 /* Returns an array of pointers with every pointer, pointing to a word
    and updates the value of argc*/
-char **create_argv_agrc(char * string, int * argc)
+char **create_argv_argc(char * string, int * argc)
 {
 	char ** argv = (char**)malloc(sizeof(char *));
-	char * word = (char *)malloc(sizeof(char));
 	int i, j, words = 0;
 	int lenght = strlen(string);
 
@@ -23,7 +22,7 @@ char **create_argv_agrc(char * string, int * argc)
 		else
 		{
 			argv = (char **)realloc(argv, sizeof(char *) * (words + 1));
-			argv[words] = (char *)malloc(sizeof(char *));
+			argv[words] = (char *)malloc(sizeof(char));
 			j = 0;
 			for ( ; i < lenght && string[i] != ' '; i++)
 			{
@@ -60,7 +59,7 @@ int main()
 	command[i] = '\0'; // character end string
 
 	// Creation of argv and update of argc
-	local_argv = create_argv_agrc(command, &local_argc);
+	local_argv = create_argv_argc(command, &local_argc);
 
 	for (i = 0; i < local_argc; i++)
 	{
