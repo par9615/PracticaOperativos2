@@ -2,7 +2,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
-int main()
+#include <stdlib.h>
+
+
+int main(int argc, char* argv[])
 {
 	int pid, status;
 
@@ -17,26 +20,28 @@ int main()
 	//Banderas para verificar user y pass
 	int user_v = 0, pass_v = 0;
 
-	printf("Nombre de usuario >> ");
-	while(scanf("%s", user) != EOF)
-	{
+	FILE *file;
 
+	
+	while(1)
+	{
+		printf("Nombre de usuario >> ");
+		scanf("%s", user);
 		printf("Contraseña >> ");
 		scanf("%s", pass);
 
 		user_v = pass_v = 0;
 
-		FILE *file;
-
+		
 		if((file = fopen("passwd.txt", "r")) == NULL)
 			printf("Error al verificar contraseña\n");
 		
 		else
 		{
 			while(fscanf(file, "%[^:]", user_f) != EOF)
-			{
+			{				
 				fgetc(file);
-				fscanf(file, "%[^\n]", pass_f);
+				fscanf(file, "%[^\n]", pass_f);				
 				fgetc(file);
 
 				if(strcmp(user_f, user) == 0)
@@ -50,25 +55,26 @@ int main()
 			}				
 		}
 
+		fclose(file);
+
 		if(user_v && pass_v)
 		{
-			printf("Ingreso exitoso\n");
+			printf("Ingreso exitoso\n");	
 
 			pid = fork();
 			if(pid == 0)
 				execlp("sh", "sh", NULL); //se cambia por el sh.c
-
-			wait(&status);
+			
+			wait(&status);			
 		}
 
 		else if(user_v && !pass_v)
 			printf("Contraseña errónea\n");
 
 		else
-			printf("Usuario inexistente\n");
-
-
-		printf("Nombre de usuario >> ");
+			printf("Usuario inexistente\n");	
+				
 	}
+
 	return 0;
 }
