@@ -48,6 +48,17 @@ void free_memory(char ** argv, int argc, char * command)
 	free(command);
 }
 
+void create_shutdown_file()
+{
+	FILE * file;
+
+	file = fopen("shutdown.txt", "w");
+
+	fputs(file, "yes");
+
+	fclose(file);
+}
+
 int main()
 {
 	// Argv and argc
@@ -88,16 +99,18 @@ int main()
 		}
 		else if (strcmp(local_argv[0], "exit") == 0)
 		{
-			printf("exit action\n");
+			exit(0);
 		}
 		else if (strcmp(local_argv[0], "shutdown") == 0)
 		{
-			printf("shutdown action\n");
+			create_shutdown_file();
+			exit(0);
 		}
 		else
 		{
 			printf("%s: command not found\n", local_argv[0]);
 		}
+
 		free_memory(local_argv, local_argc, command);
 	}
 
