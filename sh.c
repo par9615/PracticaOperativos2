@@ -54,7 +54,7 @@ void create_shutdown_file()
 
 	file = fopen("shutdown.txt", "w");
 
-	fputs(file, "yes");
+	fputs("yes", file);
 
 	fclose(file);
 }
