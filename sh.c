@@ -38,35 +38,68 @@ char **create_argv_argc(char * string, int * argc)
 	return argv;
 }
 
+void free_memory(char ** argv, int argc, char * command)
+{
+	int i;
+	for (i = 0; i < argc; i++)
+		free(argv[i]);
+	free(argv);
+
+	free(command);
+}
+
 int main()
 {
-	// array to read command string
-	char *command = (char *)malloc(sizeof(char));
-
 	// Argv and argc
 	char ** local_argv;
 	int local_argc = 0;
 
+	// array to read command string
+	char * command;
+
 	char c;
-	int i = 0;
+	int i;
 
-	printf("sh >> ");
-	while((c = getchar()) != '\n' && c != EOF)
+	
+	while(c != EOF)
 	{
-		command[i++] = c; // Adds the value of c to the array
-		command = realloc(command, i + 1); // Adds space for the next character
+		i = 0;
+		printf("sh >> ");
+
+		command = (char *)malloc(sizeof(char));
+
+		while((c = getchar()) != '\n')
+		{
+			command[i++] = c; // Adds the value of c to the array
+			command = realloc(command, i + 1); // Adds space for the next character
+		}
+		command[i] = '\0'; // character end string
+		
+		// Creation of argv and update of argc
+		local_argv = create_argv_argc(command, &local_argc);
+
+		if (strcmp(local_argv[0], "export") == 0)
+		{
+			printf("export action\n");
+		}
+		else if (strcmp(local_argv[0], "echo") == 0)
+		{
+			printf("echo action\n");
+		}
+		else if (strcmp(local_argv[0], "exit") == 0)
+		{
+			printf("exit action\n");
+		}
+		else if (strcmp(local_argv[0], "shutdown") == 0)
+		{
+			printf("shutdown action\n");
+		}
+		else
+		{
+			printf("%s: command not found\n", local_argv[0]);
+		}
+		free_memory(local_argv, local_argc, command);
 	}
-	command[i] = '\0'; // character end string
-
-	// Creation of argv and update of argc
-	local_argv = create_argv_argc(command, &local_argc);
-
-	for (i = 0; i < local_argc; i++)
-	{
-		printf("argv[%d] = %s\n", i, local_argv[i]);
-	}
-
-	printf("Entered string: %s\n", command);
 
 	return 0;
 }
