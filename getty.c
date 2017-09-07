@@ -4,7 +4,6 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 
-
 int main(int argc, char* argv[])
 {
 	int pid, status;
@@ -63,9 +62,16 @@ int main(int argc, char* argv[])
 
 			pid = fork();
 			if(pid == 0)
-				execlp("sh", "sh", NULL); //se cambia por el sh.c
+				execlp("./sh", "./sh", NULL); //se cambia por el sh.c
 			
-			wait(&status);			
+
+			wait(&status);
+			
+			if(status>>8 == 1)				
+				exit(0);
+		
+								
+
 		}
 
 		else if(user_v && !pass_v)
