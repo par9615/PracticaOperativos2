@@ -56,7 +56,7 @@ int main()
 			char ** variable_value = get_variable_and_value(local_argv[1]);
 			if (setenv(variable_value[0], variable_value[1], 1) == -1)
 			{
-				printf("PUTO EL QUE LO LEA\n");
+				printf("Error\n");
 			}
 		}
 		else if (strcmp(local_argv[0], "echo") == 0)
@@ -82,6 +82,7 @@ int main()
 		}
 
 		free_memory(local_argv, local_argc, command);
+		fflush(stdin);
 	}
 
 	return 0;
@@ -198,9 +199,8 @@ void change_if_variable(char **array_string)
 			if (variable_value != NULL)
 			{
 				free(array_string[i]);
-				array_string[i] = (char *)malloc(sizeof(char) * strlen(variable_value));
-				for (j = 0; j <= length; j++)
-					array_string[i][j] = variable_value[j];
+				array_string[i] = (char *)malloc(sizeof(char) * (strlen(variable_value) + 1));
+				strcpy(array_string[i], variable_value);
 			}
 		}
 		i++;
