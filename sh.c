@@ -59,6 +59,42 @@ void create_shutdown_file()
 	fclose(file);
 }
 
+/* Returns a list of strings containing at 0 the variable name and in 1 the variable value */
+char **get_variable_and_value(char *string)
+{
+	char **variable_and_value = NULL;
+
+	if (string[0] == '=')
+		return variable_and_value;
+
+	int length = strlen(string), i, last_i, j = 0;
+	variable_and_value = (char **)malloc(sizeof(char *) * 2);
+	bool not_found_equal = true;
+	variable_and_value[0] = (char *)malloc(sizeof(char));
+	variable_and_value[1] = (char *)malloc(sizeof(char));
+	for(i = 0; i < length; i++)
+	{
+		if (string[i] != '=' && not_found_equal)
+		{
+			last_i = i + 1;
+			variable_and_value[0][i] = string[i];
+			variable_and_value[0] = (char *)realloc(variable_and_value[0], sizeof(char) * (i + 2));
+		}
+		else if (string[i] == '=' && not_found_equal)
+		{
+			not_found_equal = false;
+		}
+		else if (!not_found_equal)
+		{
+			variable_and_value[1][j++] = string[i];
+			variable_and_value[1] = (char *)realloc(variable_and_value[1], sizeof(char) * (j + 1));
+		}
+	}
+	variable_and_value[0][last_i] = '\0';
+	variable_and_value[1][j] = '\0';
+	return variable_and_value;
+}
+
 int main()
 {
 	// Argv and argc
@@ -96,6 +132,19 @@ int main()
 		{
 			create_shutdown_file();
 			exit(0);
+		}
+		else if (strcmp(local_argv[0], "export") == 0)
+		{
+			char ** variable_value = get_variable_and_value(local_argv[1]);
+			if (setenv(variable_value[0], variable_value[1], 1) == -1)
+			{
+				printf("PUTO EL QUE LO LEA\n");
+			}
+		}
+		else if (strcmp(local_argv[0], "echo") == 0)
+		{
+			char * temp = &(local_argv[1][1]);
+			printf("%s\n", getenv(temp));
 		}
 		else
 		{
