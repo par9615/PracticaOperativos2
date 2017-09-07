@@ -2,3 +2,4 @@ getty
 init
 sh
 shutdown.txt
+*.o
