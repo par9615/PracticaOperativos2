@@ -33,7 +33,7 @@ int main()
 	// Tree
 	tree = (Node *)malloc(sizeof(Node));
 	tree->key = "PATH";
-	tree->value = "";
+	tree->value = "\\bin";
 	tree->left = NULL;
 	tree->right = NULL;
 
@@ -72,9 +72,6 @@ int main()
 				printf("export: '%s:' not a valid identifier\n", local_argv[1]);
 			else
 				insert(tree, array_string[0], array_string[1]);
-			printf("Printing tree\n");
-			printf("%d\n", tree == NULL);
-			print_tree(tree);
 		}
 		else if (strcmp(local_argv[0], "echo") == 0)
 		{
@@ -103,7 +100,6 @@ int main()
 			}
 			wait(&status);
 		}
-
 		free_memory(local_argv, local_argc, command);
 	}
 
@@ -128,10 +124,8 @@ void insert(Node *parent, char * key, char * value)
 	if (parent == NULL)
 	{
 		parent = create_node(key, value);
-		printf("node->%s = %s and node->%s = %s\n", key, parent->key, value, parent->value);
 		return;
 	}
-	printf("Entro aqui\n");
 
 	int movement = strcmp(parent->key, key);
 	if (movement == 0)
@@ -192,9 +186,9 @@ char *get_value_re(Node * parent, char * key)
 /* Changes every registered env variable for its value */
 void change_if_variable(char **array_string)
 {
-	int i;
+	int i = 0;
 	char * cut_string;
-	for(i = 0; array_string[i] != NULL; i++)
+	while(array_string[i] != NULL)
 	{
 		if (array_string[i][0] == '$')
 		{
@@ -207,12 +201,13 @@ void change_if_variable(char **array_string)
 			char * variable_value = get_value_re(tree, cut_string);
 			if (variable_value != NULL)
 			{
-				printf("Aqui entro\n");
 				free(array_string[i]);
-				array_string[i] = variable_value;
-				printf("Aqui ya no llego\n");
+				array_string[i] = (char *)malloc(sizeof(char) * strlen(variable_value));
+				for (j = 0; j <= length; j++)
+					array_string[i][j] = variable_value[j];
 			}
 		}
+		i++;
 	}
 }
 
@@ -294,6 +289,7 @@ void free_memory(char ** argv, int argc, char * command)
 	free(argv);
 
 	free(command);
+
 }
 
 /* Creates a file to comunicate to init program and close all terminals */
