@@ -14,6 +14,103 @@ typedef struct node
 	struct node *right;
 } Node;
 
+Node *create_node(char * key, char * value);
+void insert(Node *parent, char * key, char * value);
+char *get_value_it(Node *parent, char * key);
+char *get_value_re(Node * parent, char * key);
+void change_if_variable(char **array_string);
+char **get_variable_and_value(char *string);
+char **tokenize(char * string, int * size, char separator);
+void free_memory(char ** argv, int argc, char * command);
+void create_shutdown_file();
+void print_tree(Node * node);
+
+/* Global env variables */
+Node * tree;
+
+int main()
+{
+	// Tree
+	tree = (Node *)malloc(sizeof(Node));
+	tree->key = "PATH";
+	tree->value = "";
+	tree->left = NULL;
+	tree->right = NULL;
+
+	// Argv and argc
+	char ** local_argv;
+	int local_argc = 0;
+
+	// array to read command string
+	char * command;
+
+	char c;
+	int i;
+
+	
+	while(c != EOF)
+	{
+		i = 0;
+		printf("sh >> ");
+
+		command = (char *)malloc(sizeof(char));
+
+		while((c = getchar()) != '\n')
+		{
+			command[i++] = c; // Adds the value of c to the array
+			command = realloc(command, i + 1); // Adds space for the next character
+		}
+		command[i] = '\0'; // character end string
+		
+		// Creation of argv and update of argc
+		local_argv = tokenize(command, &local_argc, ' ');
+
+		if (strcmp(local_argv[0], "export") == 0)
+		{
+			char ** array_string = get_variable_and_value(local_argv[1]);
+			if (array_string == NULL)
+				printf("export: '%s:' not a valid identifier\n", local_argv[1]);
+			else
+				insert(tree, array_string[0], array_string[1]);
+			printf("Printing tree\n");
+			printf("%d\n", tree == NULL);
+			print_tree(tree);
+		}
+		else if (strcmp(local_argv[0], "echo") == 0)
+		{
+			for(i = 1; local_argv[i] != NULL; i++)
+			{
+				printf("%s ", local_argv[i]);
+			}
+			printf("\n");
+		}
+		else if (strcmp(local_argv[0], "exit") == 0)
+		{
+			exit(0);
+		}
+		else if (strcmp(local_argv[0], "shutdown") == 0)
+		{
+			create_shutdown_file();
+			exit(0);
+		}
+		else
+		{
+			int pid = fork(), status, status_child;
+			if (pid == 0) {
+				status_child = execvp(local_argv[0], local_argv);
+				if (status_child == -1)
+					printf("%s: command not found\n", local_argv[0]);
+			}
+			wait(&status);
+		}
+
+		free_memory(local_argv, local_argc, command);
+	}
+
+	return 0;
+}
+
+/* Creates a new struct of node */
 Node *create_node(char * key, char * value)
 {
 	Node * node = (Node *)malloc(sizeof(Node));
@@ -25,13 +122,16 @@ Node *create_node(char * key, char * value)
 	return node;
 }
 
+/* Inserts a node with a key and value inside the tree */
 void insert(Node *parent, char * key, char * value)
 {
 	if (parent == NULL)
 	{
 		parent = create_node(key, value);
+		printf("node->%s = %s and node->%s = %s\n", key, parent->key, value, parent->value);
 		return;
 	}
+	printf("Entro aqui\n");
 
 	int movement = strcmp(parent->key, key);
 	if (movement == 0)
@@ -57,6 +157,7 @@ void insert(Node *parent, char * key, char * value)
 		insert(parent->left, key, value);
 }
 
+/* Get value with key inside tree iterative */
 char *get_value_it(Node *parent, char * key)
 {
 	Node * actual = parent;
@@ -73,6 +174,7 @@ char *get_value_it(Node *parent, char * key)
 	return NULL;
 }
 
+/* Get value with key inside tree recursively */
 char *get_value_re(Node * parent, char * key)
 {
 	if (parent == NULL)
@@ -85,6 +187,69 @@ char *get_value_re(Node * parent, char * key)
 		get_value_re(parent->left, key);
 	else
 		get_value_re(parent->right, key);
+}
+
+/* Changes every registered env variable for its value */
+void change_if_variable(char **array_string)
+{
+	int i;
+	char * cut_string;
+	for(i = 0; array_string[i] != NULL; i++)
+	{
+		if (array_string[i][0] == '$')
+		{
+			int length = strlen(array_string[i]), j;
+			cut_string = (char *)malloc(sizeof(char) * (length));
+
+			for (j = 0 ; j <= length; j++) // Copies \0 to the new string
+				cut_string[j] = array_string[i][j+1];
+
+			char * variable_value = get_value_re(tree, cut_string);
+			if (variable_value != NULL)
+			{
+				printf("Aqui entro\n");
+				free(array_string[i]);
+				array_string[i] = variable_value;
+				printf("Aqui ya no llego\n");
+			}
+		}
+	}
+}
+
+/* Returns a list of strings containing at 0 the variable name and in 1 the variable value */
+char **get_variable_and_value(char *string)
+{
+	char **variable_and_value = NULL;
+
+	if (string[0] == '=')
+		return variable_and_value;
+
+	int length = strlen(string), i, last_i, j = 0;
+	variable_and_value = (char **)malloc(sizeof(char *) * 2);
+	bool not_found_equal = true;
+	variable_and_value[0] = (char *)malloc(sizeof(char));
+	variable_and_value[1] = (char *)malloc(sizeof(char));
+	for(i = 0; i < length; i++)
+	{
+		if (string[i] != '=' && not_found_equal)
+		{
+			last_i = i + 1;
+			variable_and_value[0][i] = string[i];
+			variable_and_value[0] = (char *)realloc(variable_and_value[0], sizeof(char) * (i + 2));
+		}
+		else if (string[i] == '=' && not_found_equal)
+		{
+			not_found_equal = false;
+		}
+		else if (!not_found_equal)
+		{
+			variable_and_value[1][j++] = string[i];
+			variable_and_value[1] = (char *)realloc(variable_and_value[1], sizeof(char) * (j + 1));
+		}
+	}
+	variable_and_value[0][last_i] = '\0';
+	variable_and_value[1][j] = '\0';
+	return variable_and_value;
 }
 
 /* Returns an array of pointers with every pointer, pointing to a word
@@ -114,11 +279,13 @@ char **tokenize(char * string, int * size, char separator)
 		}
 	}
 	array_pointers[words] = NULL;
+	change_if_variable(array_pointers);
 	*size = words;
 
 	return array_pointers;
 }
 
+/* Free alocated memory assigned to pointers */
 void free_memory(char ** argv, int argc, char * command)
 {
 	int i;
@@ -129,6 +296,7 @@ void free_memory(char ** argv, int argc, char * command)
 	free(command);
 }
 
+/* Creates a file to comunicate to init program and close all terminals */
 void create_shutdown_file()
 {
 	FILE * file;
@@ -140,72 +308,12 @@ void create_shutdown_file()
 	fclose(file);
 }
 
-int main()
+/* Prints env binary tree */
+void print_tree(Node * node)
 {
-	// Argv and argc
-	char ** local_argv;
-	int local_argc = 0;
-
-	// array to read command string
-	char * command;
-
-	// Binay Tree of variables
-	Node * tree;
-
-	char c;
-	int i;
-
-	
-	while(c != EOF)
-	{
-		i = 0;
-		printf("sh >> ");
-
-		command = (char *)malloc(sizeof(char));
-
-		while((c = getchar()) != '\n')
-		{
-			command[i++] = c; // Adds the value of c to the array
-			command = realloc(command, i + 1); // Adds space for the next character
-		}
-		command[i] = '\0'; // character end string
-		
-		// Creation of argv and update of argc
-		local_argv = tokenize(command, &local_argc, ' ');
-
-		if (strcmp(local_argv[0], "export") == 0)
-		{
-			int size;
-			char **parsed_key_value = tokenize(local_argv[1], &size, '=');
-			insert(tree, parsed_key_value[0], parsed_key_value[1]);
-		}
-		else if (strcmp(local_argv[0], "echo") == 0)
-		{
-			char * variable = &(local_argv[1][1]);
-			printf("%s\n", get_value_re(tree, variable));
-		}
-		else if (strcmp(local_argv[0], "exit") == 0)
-		{
-			exit(0);
-		}
-		else if (strcmp(local_argv[0], "shutdown") == 0)
-		{
-			create_shutdown_file();
-			exit(0);
-		}
-		else
-		{
-			int pid = fork(), status, status_child;
-			if (pid == 0) {
-				status_child = execvp(local_argv[0], local_argv);
-				if (status_child == -1)
-					printf("%s: command not found\n", local_argv[0]);
-			}
-			wait(&status);
-		}
-
-		free_memory(local_argv, local_argc, command);
-	}
-
-	return 0;
+	if (node == NULL)
+		return;
+	printf("key: %s, value:%s\n", node->key, node->value);
+	print_tree(node->left);
+	print_tree(node->right);
 }
