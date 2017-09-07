@@ -11,6 +11,7 @@ void free_memory(char **, int, char *);
 void create_shutdown_file();
 char **get_variable_and_value(char *);
 void create_shutdown_file();
+void change_if_variable(char **array_string);
 
 int main()
 {
@@ -70,6 +71,7 @@ int main()
 		}
 		else
 		{
+
 			int pid = fork(), status, status_child;
 			if (pid == 0) {
 				status_child = execvp(local_argv[0], local_argv);
@@ -112,6 +114,7 @@ char **tokenize(char * string, int * size, char separator)
 		}
 	}
 	array_pointers[words] = NULL;
+	change_if_variable(array_pointers);
 	*size = words;
 
 	return array_pointers;
@@ -174,4 +177,32 @@ char **get_variable_and_value(char *string)
 	variable_and_value[0][last_i] = '\0';
 	variable_and_value[1][j] = '\0';
 	return variable_and_value;
+}
+
+/* Changes every registered env variable for its value */
+void change_if_variable(char **array_string)
+{
+	int i = 0;
+	char * cut_string;
+	while(array_string[i] != NULL)
+	{
+		if (array_string[i][0] == '$')
+		{
+			int length = strlen(array_string[i]), j;
+			cut_string = (char *)malloc(sizeof(char) * (length));
+
+			for (j = 0 ; j <= length; j++) // Copies \0 to the new string
+				cut_string[j] = array_string[i][j+1];
+
+			char * variable_value = getenv(cut_string);
+			if (variable_value != NULL)
+			{
+				free(array_string[i]);
+				array_string[i] = (char *)malloc(sizeof(char) * strlen(variable_value));
+				for (j = 0; j <= length; j++)
+					array_string[i][j] = variable_value[j];
+			}
+		}
+		i++;
+	}
 }
